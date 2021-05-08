@@ -12,6 +12,7 @@ def play():
     if game_mode == '1':
         while True:
             if board.is_game_over() == True:
+                print(display(board))
                 break
             else:
                 print(display(board))
@@ -84,6 +85,7 @@ def make_move(board: chess.Board) -> chess.Move:
             if move == str(legal_move):
                 return legal_move
     return make_move(board)
+
 
 if __name__ == "__main__":
     try:
