@@ -50,15 +50,13 @@ def play():
         print("Game ends in a draw!")
 
 
-
-
 def display(board):
 
     board_str = list(str(board))
 
     for i, piece in enumerate(board_str):
         if piece in pieces:
-            board_str[i] == pieces[piece]
+            board_str[i] = pieces[piece]
 
     ranks = ["1", "2", "3", "4", "5", "6", "7", "8"]
     uni_board = []
