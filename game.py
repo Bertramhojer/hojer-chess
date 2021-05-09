@@ -1,5 +1,6 @@
 import chess
 from constants import pieces
+import evaluation
 # import engines
 
 def play():
@@ -16,7 +17,7 @@ def play():
                 break
             else:
                 print(display(board))
-                if board.turn:
+                if board.turn == True: # True if White to move
                     print(" -- White to move --")
                 else:
                     print(" -- Black to move --")
