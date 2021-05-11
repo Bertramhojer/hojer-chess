@@ -1,7 +1,8 @@
 import chess
 from constants import pieces
 import evaluation
-# import engines
+import time
+
 
 def play():
 
@@ -24,16 +25,27 @@ def play():
                 board.push(make_move(board))
 
     elif game_mode == '2':
-        user = (
-            chess.WHITE if input("Play as [w]hite or [b]lack: " == "w") else chess.BLACK
-            )
+
+        engine = input("1) RandomEval   2) SimpleEval: ")
+
+        if engine == '1':
+            engine = evaluation.RandomEval(board)
+        if engine == '2':
+            engine = evaluation.SimpleEval(board)
+
+
+        user = input("'w' to play as white or 'b' to play as black: ")
+        user = chess.WHITE if user == 'w' else chess.BLACK
         
         if user == chess.WHITE:
             print(display(board))
             board.push(make_move(board))
         
         while not board.is_game_over():
-            board.push(next_move(get_depth(), board, debug=False))
+            engine_move = engine.make_move()
+            board.push_san(engine_move)
+            time.sleep(.5)
+            print(f"\nEngine plays: {engine_move}")
             print(display(board))
             board.push(make_move(board))
     
@@ -94,3 +106,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
 
+
+def game_loop():
+    engine_move = engine.make_move()
+    board.push_san(engine_move)
+    time.sleep(.5)
+    print(f"\nEngine plays: {engine_move}")
+    print(display(board))
+    board.push(make_move(board))

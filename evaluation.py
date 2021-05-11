@@ -8,12 +8,19 @@ import random
 
 class BaseEngine:
 
-    def __init__(self):
-        pass
+    def __init__(self, board):
+        self.board = board
+        
 
 
 
 class RandomEval:
+    """
+    Engine class that does no board evalatuon but produces a random move.
+
+    Init contains the board initiates in the game.py file.
+    make_move(): loops through legal moves and returns a random legal move
+    """
 
     def __init__(self, board):
         self.board = board
@@ -24,17 +31,20 @@ class RandomEval:
         self.moves = []
         for move in self.board.legal_moves:
             self.moves.append(str(move))
-        self.random_move = self.moves[random.randrange(0, 20))]
+        print(self.moves)
+        self.random_move = self.moves[random.randrange(0, len(self.moves))]
 
-        return self.random.move
-
+        return self.random_move
 
 
 
 class SimpleEval:
 
     def __init__(self, board):
-        pass
+        self.board = board
+
+
+
 
     def is_end_game(board):
         queens = 0
