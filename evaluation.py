@@ -44,8 +44,6 @@ class SimpleEval:
         self.board = board
 
 
-
-
     def is_end_game(board):
         queens = 0
         minors = 0
