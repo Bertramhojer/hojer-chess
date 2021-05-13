@@ -4,15 +4,56 @@ Will contain multiple different move-evaluation algorithms
 import chess
 import constants
 import random
+import game
 
 
-class BaseEngine:
 
-    def __init__(self, board):
-        self.board = board
+
+class Openings:
+    
+    def __init__(self, made_moves=game.engine.made_moves):
+        self.made_moves = made_moves
+
+    def get_opening_move(self):
         
+        # Engine playing black
+        if game.user == chess.WHITE:
+            # open sicilian
+            try:
+                if self.made_moves[0] == 'e2e4':
+                    if self.made_moves[2] == 'g1g3':
+                        if self.made_moves[4] == 'd2d4':
+                            if self.made_moves[6] == 'f3d4':
+                                return 'g8f6'
+                            return 'c5c4'
+                        return 'd7d6'
+                    return 'c7c5'
+            except IndexError:
+                pass
+
+            # queens gambit declined
+            try:
+                if self.made_moves[0] == 'd2d4':
+                    if self.made_moves[2] == 'c2c4':
+                        if self.made_moves[4] == 'b1c3':
+                            if self.made_moves[6] == 'g1f3':
+                                return 'c7c6'
+                            return 'g8f6'
+                        return 'e7e6'
+                    return 'd7d5'
+            except IndexError:
+                pass
+
+        elif game.user == chess.BLACK:
+            if self.made_moves == []:
+                return 'e2e4'
+            if self.made_moves[1] == 'c7c5':
+                return 'g1g3'
 
 
+
+
+        
 
 class RandomEval:
     """
@@ -24,6 +65,7 @@ class RandomEval:
     """
 
     def __init__(self, board, made_moves=list()):
+        super().__init__()
         self.board = board
         self.made_moves = list()
 
@@ -40,7 +82,7 @@ class RandomEval:
 
 
 
-class SimpleEval:
+class SimpleEval(Openings):
     """
     Engine Class performing a simple evaluation inspired by Michniewski's simple evaluation;
     https://www.chessprogramming.org/Simplified_Evaluation_Function
@@ -57,8 +99,8 @@ class SimpleEval:
 
     """
 
-
     def __init__(self, board, made_moves=list()):
+        super().__init__()
         self.board = board
         self.made_moves = list()
     
@@ -67,7 +109,7 @@ class SimpleEval:
         """
         Check if the game is in the opening phase
         """
-        if self.board.fullmove_number < 5:
+        if self.board.fullmove_number <= 4:
             return True
         return False
 
