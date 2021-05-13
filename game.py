@@ -29,9 +29,9 @@ def play():
         engine = input("1) RandomEval   2) SimpleEval: ")
 
         if engine == '1':
-            engine = evaluation.RandomEval(board)
+            engine = evaluation.RandomEval(board, made_moves = list())
         if engine == '2':
-            engine = evaluation.SimpleEval(board)
+            engine = evaluation.SimpleEval(board, made_moves = list())
 
 
         user = input("'w' to play as white or 'b' to play as black: ")
@@ -39,15 +39,21 @@ def play():
         
         if user == chess.WHITE:
             print(display(board))
-            board.push(make_move(board))
+            user_move = make_move(board)
+            board.push(user_move)
+            engine.made_moves.append(str(user_move))
         
         while not board.is_game_over():
             engine_move = engine.make_move()
+            engine.made_moves.append(engine_move)
             board.push_san(engine_move)
             time.sleep(.5)
             print(f"\nEngine plays: {engine_move}")
             print(display(board))
-            board.push(make_move(board))
+            user_move = make_move(board)
+            board.push(user_move)
+            engine.made_moves.append(str(user_move))
+            print(engine.made_moves)
     
     else:
         print("Invalid input - enter '1' or '2'")
@@ -65,6 +71,16 @@ def play():
 
 
 def display(board):
+    """
+    Displays the chess-board in terminal with unicode chess symbols as well as ranks and files.
+    Inspired by Andrew Healey's terminal GUI which in turn is inspired by sunfish.
+    Functions iterates over each square and changes letter value to its unicode representation and
+    prints out the board in the user-terminal.
+
+    Variables
+    board_str : 127 chr iterable list-representation of the chessboard
+    pieces : unicode chess pieces found in constants.py
+    """
 
     board_str = list(str(board))
 
@@ -105,12 +121,3 @@ if __name__ == "__main__":
         play()
     except KeyboardInterrupt:
         pass
-
-
-def game_loop():
-    engine_move = engine.make_move()
-    board.push_san(engine_move)
-    time.sleep(.5)
-    print(f"\nEngine plays: {engine_move}")
-    print(display(board))
-    board.push(make_move(board))
