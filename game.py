@@ -26,17 +26,16 @@ def play():
 
     elif game_mode == '2':
 
+        user = input("'w' to play as white or 'b' to play as black: ")
+        user = chess.WHITE if user == 'w' else chess.BLACK
+
         engine = input("1) RandomEval   2) SimpleEval: ")
 
         if engine == '1':
-            engine = evaluation.RandomEval(board, made_moves = list())
+            engine = evaluation.RandomEval(board, made_moves = list(), user=user)
         if engine == '2':
-            engine = evaluation.SimpleEval(board, made_moves = list())
+            engine = evaluation.SimpleEval(board, made_moves = list(), user=user)
 
-
-        user = input("'w' to play as white or 'b' to play as black: ")
-        user = chess.WHITE if user == 'w' else chess.BLACK
-        
         if user == chess.WHITE:
             print(display(board))
             user_move = make_move(board)
@@ -46,23 +45,22 @@ def play():
         while not board.is_game_over():
 
             # Check if we're in the opening
+
             if engine.is_opening():
-                engine_move = engine.get_opening_move()
-                engine.made_moves.append(engine_move)
-                board.push_san(engine_move)
-            
-            # Else run through normal evaluation
+                engine_move = engine.make_opening_move()
+                if engine_move == None:
+                    engine_move = engine.make_move()
             else:
                 engine_move = engine.make_move()
-                engine.made_moves.append(engine_move)
-                board.push_san(engine_move)
-                time.sleep(.5)
-                print(f"\nEngine plays: {engine_move}")
-                print(display(board))
-                user_move = make_move(board)
-                board.push(user_move)
-                engine.made_moves.append(str(user_move))
-                print(engine.made_moves)
+
+            engine.made_moves.append(engine_move)
+            board.push_san(str(engine_move))
+            print(f"\nEngine plays: {engine_move}")
+            print(display(board))
+
+            user_move = make_move(board)
+            board.push(user_move)
+            engine.made_moves.append(str(user_move))
     
     else:
         print("Invalid input - enter '1' or '2'")
