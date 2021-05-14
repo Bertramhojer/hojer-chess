@@ -7,9 +7,7 @@ import random
 import game
 
 
-
-
-class Openings:
+class BaseEngine:
     
     def __init__(self, board, made_moves, user):
         self.board = board
@@ -25,11 +23,14 @@ class Openings:
         return False
 
     def get_opening_move(self):
-        
+
+        self.sicilian = [['e2e4', 'g1f3', 'd2d4', 'f3d4'], ['c7c5', 'd7d6', 'c5d4', 'g8f6']]
+        self.q_gambit = [['d2d4', 'c2c4', 'b1c3', 'g1f3'], ['d7d5', 'e7e6', 'g8f6', 'c7c6']]
+
         # Engine playing black
         if self.user == chess.WHITE:
+            
             # open sicilian
-       
             try:
                 if self.made_moves[0]=='e2e4':
                     try:
@@ -71,16 +72,6 @@ class Openings:
             except:
                 return None
 
-        """
-            if self.made_moves[0] == 'd2d4':
-                if self.made_moves[2] == 'c2c4':
-                    if self.made_moves[4] == 'b1c3':
-                        if self.made_moves[6] == 'g1f3':
-                            return 'c7c6'
-                        return 'g8f6'
-                    return 'e7e6'
-                return 'd7d5'
-        """
 
         if self.user == chess.BLACK:
             if self.made_moves == []:
@@ -96,9 +87,7 @@ class Openings:
 
 
 
-        
-
-class RandomEval(Openings):
+class RandomEval(BaseEngine):
     """
     Engine class that does no board evalatuon but produces a random move.
 
@@ -123,21 +112,16 @@ class RandomEval(Openings):
 
 
 
-class SimpleEval(Openings):
+class SimpleEval(BaseEngine):
     """
     Engine Class performing a simple evaluation inspired by Michniewski's simple evaluation;
     https://www.chessprogramming.org/Simplified_Evaluation_Function
 
 
     Functions:
-
     Init initiates the class with the current board from game.py
-
     is_opening(): takes no arguments and determines whether we're in the opening based on fullmoves made.
-
     is_end_game(): takes no arguments and determines end-game status by simple piece evaluation
-
-
     """
 
     def __init__(self, board, made_moves, user):

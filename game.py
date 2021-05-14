@@ -45,7 +45,6 @@ def play():
         while not board.is_game_over():
 
             # Check if we're in the opening
-
             if engine.is_opening():
                 engine_move = engine.make_opening_move()
                 if engine_move == None:
@@ -107,7 +106,7 @@ def display(board):
     return "\n" + "\n".join(uni_board)
 
 
-def make_move(board: chess.Board) -> chess.Move:
+def make_move(board):
 
     move = input("('?') for legal moves\nYour move:\n")
 
