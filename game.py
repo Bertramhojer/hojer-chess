@@ -35,12 +35,14 @@ def play():
             engine = evaluation.RandomEval(board, made_moves = list(), user=user)
         if engine == '2':
             engine = evaluation.SimpleEval(board, made_moves = list(), user=user)
+            evaluations = list()
 
         if user == chess.WHITE:
             print(display(board))
             user_move = make_move(board)
             board.push(user_move)
             engine.made_moves.append(str(user_move))
+            evaluations.append(engine.evaluate_board())
         
         while not board.is_game_over():
 
@@ -48,9 +50,9 @@ def play():
             if engine.is_opening():
                 engine_move = engine.make_opening_move()
                 if engine_move == None:
-                    engine_move = engine.make_move()
+                    engine_move = engine.evaluate_move()
             else:
-                engine_move = engine.make_move()
+                engine_move = engine.evaluate_move()
 
             engine.made_moves.append(engine_move)
             board.push_san(str(engine_move))
