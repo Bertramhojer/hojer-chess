@@ -18,7 +18,7 @@ class BaseEngine:
         """
         Check if the game is in the opening phase
         """
-        if self.board.fullmove_number <= 4:
+        if self.board.fullmove_number <= 5:
             return True
         return False
 
@@ -73,11 +73,33 @@ class BaseEngine:
                 return None
 
 
+        # Engine playing white
         if self.user == chess.BLACK:
+
             if self.made_moves == []:
                 return 'e2e4'
-            if self.made_moves[1] == 'c7c5':
-                return 'g1g3'
+
+            # open sicilian
+            try:
+                if self.made_moves[1]=='c7c5':
+                    try:
+                        if self.made_moves[3] == 'd7d6':
+                            pass
+                            try:
+                                if self.made_moves[5] == 'c5d4':
+                                    pass
+                                    try:
+                                        if self.made_moves[7] == 'g8f6':
+                                            return 'b1c3'
+                                    except:
+                                        return str('f3d4')
+                            except:
+                                return str('d2d4')
+                    except:
+                        return str('g1f3')
+            except:
+                return None
+
 
     def make_opening_move(self):
         self.move = self.get_opening_move()
@@ -128,10 +150,6 @@ class SimpleEval(BaseEngine):
         super().__init__(board, made_moves, user)
 
 
-    def evaluate(self):
-        pass
-
-
     def is_end_game(self):
         """
         Checking whether the end-game has been reached
@@ -148,3 +166,84 @@ class SimpleEval(BaseEngine):
         
         if queens == 0 or (queens == 2 and minors <= 1):
             return True
+    
+
+    def move_evaluation(self, board, move, endgame):
+        """
+        Evaluating the score of a given move
+        """
+        if move.promotion is not None:
+            return -float("inf") if board.turn == chess.BLACK else float("inf")
+        
+
+
+    def capture_evaluation(self, board, move):
+        """
+        Evaluate the effects of making a capture
+        """
+        pass
+
+
+    def piece_evaluation(self, piece, square, endgame):
+        """
+        Evaluate the value of a given piece on a given square
+        """
+
+        self.type = piece.piece_type
+        self.mapping = list()
+        if self.type == chess.PAWN:
+            if piece.color == chess.WHITE:
+                self.mapping = constants.white_pawn
+            else:
+                self.mapping = constants.black_pawn
+        if self.type == chess.KNIGHT:
+            self.mapping = constants.knight
+        if self.type == chess.BISHOP:
+            if piece.color == chess.WHITE:
+                self.mapping = constants.white_bishop
+            else:
+                self.mapping = constants.black_bishop
+        if self.type == chess.ROOK:
+            if piece.color == chess.WHITE:
+                self.mapping = constants.white_rook
+            else:
+                self.mapping = constants.black_rook
+        if self.type == chess.QUEEN:
+            self.mapping = constants.queen
+        if self.type == chess.KING:
+            if piece.color == chess.WHITE:
+                if endgame:
+                    self.mapping = constants.white_king_end
+                else:
+                    self.mapping = constants.white_king_mid
+            else:
+                if endgame:
+                    self.mapping = constants.black_king_end
+                else:
+                    self.mapping = constants.black_king_mid
+
+
+        return self.mapping[square]
+
+
+    
+    def board_evaluation(self):
+        """
+        Evaluates the current state of the board
+        """
+
+        self.total = 0
+
+        for square in chess.SQUARES:
+            self.piece = self.board.piece_at(square)
+            if not self.piece:
+                continue
+                
+            self.value = constants.piece_value[self.piece.piece_type] + self.piece_evaluation(self.piece, square, self.is_end_game(self.board))
+            
+            if self.piece.color == chess.WHITE:
+                self.total += self.value
+            else:
+                self.total -= self.value
+            
+            return self.total
