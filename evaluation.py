@@ -158,10 +158,12 @@ class SimpleEval(BaseEngine):
         minors = 0
 
         for square in chess.SQUARES:
-            piece = self.board.piece_at(square).piece_type
-            if piece == chess.QUEEN:
+            piece = self.board.piece_at(square)
+            if not piece:
+                continue
+            if piece.piece_type == chess.QUEEN:
                 queens += 1
-            if (piece == chess.BISHOP or piece == chess.KNIGHT):
+            if (piece.piece_type == chess.BISHOP or piece.piece_type == chess.KNIGHT):
                 minors += 1
         
         if queens == 0 or (queens == 2 and minors <= 1):
@@ -202,9 +204,9 @@ class SimpleEval(BaseEngine):
                 return constants.piece_value[5] + constants.queen[loc]
             if type == chess.KING:
                 if self.is_end_game():
-                    return constants.piece_value[6] + constants.black_king_end
+                    return constants.piece_value[6] + constants.black_king_end[loc]
                 else:
-                    return constants.piece_value[6] + constants.black_king_mid
+                    return constants.piece_value[6] + constants.black_king_mid[loc]
 
     
     def evaluate_capture(self):
@@ -216,17 +218,24 @@ class SimpleEval(BaseEngine):
 
         move_val = 0
 
+        cur_best_move = None
+
         for move in self.board.legal_moves:
+
+            if cur_best_move == None:
+                cur_best_move = move
+
 
             loc = move.from_square
             new_loc = move.to_square
             piece = self.board.piece_at(loc)
             value = self.evaluate_piece(piece, loc)
             new_value = self.evaluate_piece(piece, new_loc)
+
             if new_value > value:
                 if (new_value - value) > move_val:
                     cur_best_move = move
-        
+
         return cur_best_move
 
 
