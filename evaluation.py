@@ -135,6 +135,79 @@ class RandomEval(BaseEngine):
 
 
 class SimpleEval(BaseEngine):
+
+    def __init__(self, board, made_moves, user):
+        super().__init__(board, made_moves, user)
+    
+    def is_end_game(self):
+        queens = 0
+        minors = 0
+
+        for square in chess.SQUARES:
+            piece = self.board.piece_at(square).piece_type
+            if piece == chess.QUEEN:
+                queens += 1
+            if (piece == chess.BISHOP or piece == chess.KNIGHT):
+                minors += 1
+        
+        if queens == 0 or (queens == 2 and minors <= 1):
+            return True
+
+    def evaluate_move(self, move: chess.Move):
+        pass
+
+
+    def evaluate_piece(self, piece, loc):
+        
+        if self.user == chess.BLACK:
+            if piece == chess.PAWN:
+                return constants.piece_value[1] + constants.white_pawn[loc]
+            if piece == chess.KNIGHT:
+                return constants.piece_value[2] + constants.knight[loc]
+            if piece == chess.BISHOP:
+                return constants.piece_value[3] + constants.white_bishop[loc]
+            if piece == chess.ROOK:
+                return constants.piece_value[4] + constants.white_rook[loc]
+            if piece == chess.QUEEN:
+                return constants.piece_value[5] + constants.queen[loc]
+            if piece == chess.KING:
+                if self.is_end_game():
+                    return constants.piece_value[6] + constants.white_king_end
+                else:
+                    return constants.piece_value[6] + constants.white_king_mid
+
+        elif self.user == chess.WHITE:
+            if piece == chess.PAWN:
+                return constants.piece_value[1] + constants.black_pawn[loc]
+            if piece == chess.KNIGHT:
+                return constants.piece_value[2] + constants.knight[loc]
+            if piece == chess.BISHOP:
+                return constants.piece_value[3] + constants.black_bishop[loc]
+            if piece == chess.ROOK:
+                return constants.piece_value[4] + constants.black_rook[loc]
+            if piece == chess.QUEEN:
+                return constants.piece_value[5] + constants.queen[loc]
+            if piece == chess.KING:
+                if self.is_end_game():
+                    return constants.piece_value[6] + constants.black_king_end
+                else:
+                    return constants.piece_value[6] + constants.black_king_mid
+
+
+
+    def best_move(self):
+        for move in self.board.legal_moves:
+            loc = move.from_square
+            new_loc = move.to_square
+            piece = self.board.piece_at(loc).piece_type
+            value = self.evaluate_piece(self, piece, loc)
+            
+
+
+
+
+
+class SimpleEval2(BaseEngine):
     """
     Engine Class performing a simple evaluation inspired by Michniewski's simple evaluation;
     https://www.chessprogramming.org/Simplified_Evaluation_Function
@@ -142,7 +215,6 @@ class SimpleEval(BaseEngine):
 
     Functions:
     Init initiates the class with the current board from game.py
-    is_opening(): takes no arguments and determines whether we're in the opening based on fullmoves made.
     is_end_game(): takes no arguments and determines end-game status by simple piece evaluation
     """
 
@@ -168,20 +240,46 @@ class SimpleEval(BaseEngine):
             return True
     
 
-    def move_evaluation(self, board, move, endgame):
+    def move_evaluation(self, move, endgame):
         """
         Evaluating the score of a given move
         """
         if move.promotion is not None:
-            return -float("inf") if board.turn == chess.BLACK else float("inf")
+            return -float("inf") if self.board.turn == chess.BLACK else float("inf")
+        
+        piece = self.board.piece_at(move.from_square)
+        if piece:
+            from_value = self.piece_evaluation(piece, move.from_square, endgame)
+            to_value = self.piece_evaluation(piece, move.to_square, endgame)
+            position_change = to_value - from_value
+        else:
+            raise Exception(f"A piece was expected at {move.from_square}")
+
+        capture_value = 0.0
+        if self.board.is_capture(move):
+            capture_value = self.capture_evaluation(self.board, move)
+
+        move_value = capture_value + position_change
+        if self.board.turn == chess.BLACK:
+            move_value = -move_value
+
+        return move_value
+
         
 
-
-    def capture_evaluation(self, board, move):
+    def capture_evaluation(self, move):
         """
         Evaluate the effects of making a capture
         """
-        pass
+        if self.board.is_en_passant(move):
+            return constants.piece_value[chess.PAWN]
+        
+        to_sq = self.board.piece_at(move.to_square)
+        from_sq = self.board.piece_at(move.from_square)
+        #if self.board.piece_at(move.to_square) is None or self.board.piece_at(move.from_square) is None:
+
+        return constants.piece_value[to_sq.piece_type] - constants.piece_value[from_sq.piece_type]
+
 
 
     def piece_evaluation(self, piece, square, endgame):
@@ -196,21 +294,21 @@ class SimpleEval(BaseEngine):
                 self.mapping = constants.white_pawn
             else:
                 self.mapping = constants.black_pawn
-        if self.type == chess.KNIGHT:
+        elif self.type == chess.KNIGHT:
             self.mapping = constants.knight
-        if self.type == chess.BISHOP:
+        elif self.type == chess.BISHOP:
             if piece.color == chess.WHITE:
                 self.mapping = constants.white_bishop
             else:
                 self.mapping = constants.black_bishop
-        if self.type == chess.ROOK:
+        elif self.type == chess.ROOK:
             if piece.color == chess.WHITE:
                 self.mapping = constants.white_rook
             else:
                 self.mapping = constants.black_rook
-        if self.type == chess.QUEEN:
+        elif self.type == chess.QUEEN:
             self.mapping = constants.queen
-        if self.type == chess.KING:
+        elif self.type == chess.KING:
             if piece.color == chess.WHITE:
                 if endgame:
                     self.mapping = constants.white_king_end
@@ -247,3 +345,6 @@ class SimpleEval(BaseEngine):
                 self.total -= self.value
             
             return self.total
+
+    def best_move(self):
+        pass
