@@ -143,7 +143,8 @@ class SimpleEval(BaseEngine):
     Functions:
     is_end_game() : takes no arguments and determines end-game status by simple piece evaluation
     evaluate_piece() : gets the current value of a given piece estimated from its intrinsic value added by the piece-square table value.
-    evaluate_capture() : evaluates whether a possible trade is desirable.
+    is_capture() : checks whether a move is a capture
+    evaluate_capture() : evaluates whether a trade is favorable
     evaluate_move() : makes use of above-stated evaluation functions to find the best move in the current position.
     evaluate_board() : makes an evaluation of the board by calculating the values from evaluate_piece() for all pieces on the board.
     """
@@ -209,9 +210,38 @@ class SimpleEval(BaseEngine):
                     return constants.piece_value[6] + constants.black_king_mid[loc]
 
     
-    def evaluate_capture(self):
-        pass
+    def is_capture(self, _sq):
+        _sq = self.board.piece_at(_sq)
+        if _sq is None:
+            return False
+        return True
+    
 
+    def evaluate_capture(self, to_sq, from_sq):
+        piece_1 = self.board.piece_at(to_sq).piece_type
+        piece_2 = self.board.piece_at(from_sq).piece_type
+
+        if (constants.piece_value[piece_1] - constants.piece_value[piece_2]) >= 0:
+            return True
+        return False
+
+        
+    def evaluate_board(self):
+        total = 0
+        for sq in chess.SQUARES:
+            piece = self.board.piece_at(sq)
+
+            if not piece:
+                continue
+
+            value = self.evaluate_piece(piece, sq)
+
+            if piece.color == chess.WHITE:
+                total += value
+            elif piece.color == chess.BLACK:
+                total -= value
+            
+            return total
 
 
     def evaluate_move(self):
@@ -237,21 +267,3 @@ class SimpleEval(BaseEngine):
                     cur_best_move = move
 
         return cur_best_move
-
-
-    def evaluate_board(self):
-        total = 0
-        for sq in chess.SQUARES:
-            piece = self.board.piece_at(sq)
-
-            if not piece:
-                continue
-
-            value = self.evaluate_piece(piece, sq)
-
-            if piece.color == chess.WHITE:
-                total += value
-            elif piece.color == chess.BLACK:
-                total -= value
-            
-            return total
