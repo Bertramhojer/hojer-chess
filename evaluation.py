@@ -230,12 +230,14 @@ class SimpleEval(BaseEngine):
 
     
     def is_attacked(self, move):
+        att_count = 0
         tmp_board = self.board.copy()
         tmp_board.push(move)
         for attack in tmp_board.legal_moves:
             if attack.to_square == move.to_square:
-                return True
-        return False
+                att_count += 1
+        
+        return att_count
     
 
     def is_defended(self, move):
@@ -244,8 +246,6 @@ class SimpleEval(BaseEngine):
             if other_move == move:
                 continue
             if other_move.to_square == move.to_square:
-                if self.board.piece_at(other_move.to_square).piece_type == chess.KING:
-                    continue
                 def_count += 1
 
         return def_count
@@ -267,28 +267,59 @@ class SimpleEval(BaseEngine):
                 total -= value
             
             return total
+    
+    def evaluate_board_2(self, move):
+        total = 0
+        tmp_board = self.board.copy()
+        tmp_board.push(move)
+        for sq in chess.SQUARES:
+            piece = tmp_board.piece_at(sq)
+
+            if not piece:
+                continue
+
+            value = self.evaluate_piece(piece, sq)
+
+            if piece.color == chess.WHITE:
+                total += value
+            elif piece.color == chess.BLACK:
+                total -= value
+            
+            return total
+        
 
 
     def evaluate_move(self):
-
-        move_val = 0
-
-        cur_best_move = None
+        
+        high_score = 0
+        move_score = 0
+        best_move = None
 
         for move in self.board.legal_moves:
-
-            if cur_best_move == None:
-                cur_best_move = move
-
+            # check capture
+            # evaluate capture
+            # check defended
+            # check attacked
+            if best_move is None:
+                best_move = move
 
             loc = move.from_square
             new_loc = move.to_square
-            piece = self.board.piece_at(loc)
-            value = self.evaluate_piece(piece, loc)
-            new_value = self.evaluate_piece(piece, new_loc)
 
-            if new_value > value:
-                if (new_value - value) > move_val:
-                    cur_best_move = move
+            if self.is_capture(new_loc):
+                if self.evaluate_capture(loc, new_loc):
+                    move_score += 3
+            
+            if (self.evaluate_board() < self.evaluate_board_2(move)):
+                move_score += 4
+            
+            move_score += (
+                self.is_defended(move) - 
+                self.is_attacked(move)*3)
+            
+            if move_score >= high_score:
+                high_score = move_score
+                best_move = move
 
-        return cur_best_move
+        print(f"High-score: {high_score}, Board-eval: {self.evaluate_board()}")
+        return best_move
