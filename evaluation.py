@@ -145,8 +145,11 @@ class SimpleEval(BaseEngine):
     evaluate_piece() : gets the current value of a given piece estimated from its intrinsic value added by the piece-square table value.
     is_capture() : checks whether a move is a capture
     evaluate_capture() : evaluates whether a trade is favorable
-    evaluate_move() : makes use of above-stated evaluation functions to find the best move in the current position.
+    is_attacked() : checks whether a given move will place the piece under attack
+    is_defended() : check whether a given move will place the piece on a defended square
     evaluate_board() : makes an evaluation of the board by calculating the values from evaluate_piece() for all pieces on the board.
+    evaluate_move() : makes use of above-stated evaluation functions to find the best move in the current position.
+
     """
 
 
@@ -225,7 +228,29 @@ class SimpleEval(BaseEngine):
             return True
         return False
 
-        
+    
+    def is_attacked(self, move):
+        tmp_board = self.board.copy()
+        tmp_board.push(move)
+        for attack in tmp_board.legal_moves:
+            if attack.to_square == move.to_square:
+                return True
+        return False
+    
+
+    def is_defended(self, move):
+        def_count = 0
+        for other_move in self.board.legal_moves:
+            if other_move == move:
+                continue
+            if other_move.to_square == move.to_square:
+                if self.board.piece_at(other_move.to_square).piece_type == chess.KING:
+                    continue
+                def_count += 1
+
+        return def_count
+
+
     def evaluate_board(self):
         total = 0
         for sq in chess.SQUARES:
