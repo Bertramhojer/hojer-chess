@@ -157,12 +157,12 @@ class SimpleEval(BaseEngine):
         super().__init__(board, made_moves, user)
     
 
-    def is_end_game(self):
+    def is_end_game(self, board):
         queens = 0
         minors = 0
 
         for square in chess.SQUARES:
-            piece = self.board.piece_at(square)
+            piece = board.piece_at(square)
             if not piece:
                 continue
             if piece.piece_type == chess.QUEEN:
@@ -174,7 +174,7 @@ class SimpleEval(BaseEngine):
             return True
 
 
-    def evaluate_piece(self, piece, loc):
+    def evaluate_piece(self, board, piece, loc):
 
         type = piece.piece_type
         
@@ -190,7 +190,7 @@ class SimpleEval(BaseEngine):
             if type == chess.QUEEN:
                 return constants.piece_value[5] + constants.queen[loc]
             if type == chess.KING:
-                if self.is_end_game():
+                if self.is_end_game(board):
                     return constants.piece_value[6] + constants.white_king_end
                 else:
                     return constants.piece_value[6] + constants.white_king_mid
@@ -207,14 +207,14 @@ class SimpleEval(BaseEngine):
             if type == chess.QUEEN:
                 return constants.piece_value[5] + constants.queen[loc]
             if type == chess.KING:
-                if self.is_end_game():
+                if self.is_end_game(board):
                     return constants.piece_value[6] + constants.black_king_end[loc]
                 else:
                     return constants.piece_value[6] + constants.black_king_mid[loc]
 
     
-    def is_capture(self, _sq):
-        _sq = self.board.piece_at(_sq)
+    def is_capture(self, board, _sq):
+        _sq = board.piece_at(_sq)
         if _sq is None:
             return False
         return True
@@ -224,42 +224,35 @@ class SimpleEval(BaseEngine):
         piece_1 = self.board.piece_at(to_sq).piece_type
         piece_2 = self.board.piece_at(from_sq).piece_type
 
-        if (constants.piece_value[piece_1] - constants.piece_value[piece_2]) >= 0:
+        if (constants.piece_value[piece_1] - constants.piece_value[piece_2]) <= 0:
             return True
         return False
 
     
-    def is_attacked(self, move):
-        att_count = 0
-        tmp_board = self.board.copy()
+    def under_attack(self, board, move):
+        # define a function that checks whether any opposite side pieces can attack the piece on current square
+        pass
+
+    
+    def is_attacked(self, board, move):
+        tmp_board = board.copy()
         tmp_board.push(move)
         for attack in tmp_board.legal_moves:
             if attack.to_square == move.to_square:
-                att_count += 1
+                return True
         
-        return att_count
-    
-
-    def is_defended(self, move):
-        def_count = 0
-        for other_move in self.board.legal_moves:
-            if other_move == move:
-                continue
-            if other_move.to_square == move.to_square:
-                def_count += 1
-
-        return def_count
+        return False
 
 
-    def evaluate_board(self):
+    def evaluate_board(self, board):
         total = 0
         for sq in chess.SQUARES:
-            piece = self.board.piece_at(sq)
+            piece = board.piece_at(sq)
 
             if not piece:
                 continue
 
-            value = self.evaluate_piece(piece, sq)
+            value = self.evaluate_piece(board, piece, sq)
 
             if piece.color == chess.WHITE:
                 total += value
@@ -268,58 +261,72 @@ class SimpleEval(BaseEngine):
             
             return total
     
-    def evaluate_board_2(self, move):
-        total = 0
-        tmp_board = self.board.copy()
+    def evaluate_board_2(self, board, move):
+
+        tmp_board = board.copy()
         tmp_board.push(move)
-        for sq in chess.SQUARES:
-            piece = tmp_board.piece_at(sq)
 
-            if not piece:
-                continue
+        return self.evaluate_board(tmp_board)
+    
 
-            value = self.evaluate_piece(piece, sq)
+    def move_is_check(self, board, move):
 
-            if piece.color == chess.WHITE:
-                total += value
-            elif piece.color == chess.BLACK:
-                total -= value
+        tmp_board = board.copy()
+        tmp_board.push(move)
+        if tmp_board.is_check():
+            return True
+        return False
             
-            return total
-        
 
 
-    def evaluate_move(self):
+    def evaluate_move(self, board):
         
         high_score = 0
-        move_score = 0
         best_move = None
 
-        for move in self.board.legal_moves:
+        for move in board.legal_moves:
             # check capture
             # evaluate capture
             # check defended
             # check attacked
+            
+            score = 0
+            loc_1 = move.from_square
+            loc_2 = move.to_square
+            piece = board.piece_at(loc_1)
+
             if best_move is None:
                 best_move = move
 
-            loc = move.from_square
-            new_loc = move.to_square
-
-            if self.is_capture(new_loc):
-                if self.evaluate_capture(loc, new_loc):
-                    move_score += 3
+            if self.is_capture(board, loc_2):
+                if self.evaluate_capture(loc_1, loc_2):
+                    score += 10
+                else:
+                    score -= 5
             
-            if (self.evaluate_board() < self.evaluate_board_2(move)):
-                move_score += 4
+            if self.evaluate_piece(board, piece, loc_1) <= self.evaluate_piece(board, piece, loc_2):
+                score += (self.evaluate_piece(board, piece, loc_2))-(self.evaluate_piece(board, piece, loc_1))
+            else:
+                score -= 10
             
-            move_score += (
-                self.is_defended(move) - 
-                self.is_attacked(move)*3)
+            if self.is_attacked(board, move):
+                score += 10
+            else:
+                score -= 30
             
-            if move_score >= high_score:
-                high_score = move_score
+            if self.move_is_check(board, move):
+                score += 10
+            
+            if self.evaluate_board(board) < self.evaluate_board_2(board, move):
+                score += 20
+            else:
+                score -= 1
+            
+            print(f"score: {score}, move: {move}")
+            
+            if score > high_score:
+                high_score = score
                 best_move = move
-
-        print(f"High-score: {high_score}, Board-eval: {self.evaluate_board()}")
+                
+        
         return best_move
