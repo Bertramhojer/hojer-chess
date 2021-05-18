@@ -24,81 +24,49 @@ class BaseEngine:
 
     def get_opening_move(self):
 
-        self.sicilian = [['e2e4', 'g1f3', 'd2d4', 'f3d4'], ['c7c5', 'd7d6', 'c5d4', 'g8f6']]
-        self.q_gambit = [['d2d4', 'c2c4', 'b1c3', 'g1f3'], ['d7d5', 'e7e6', 'g8f6', 'c7c6']]
+        # Engine playing black
+        sicilian = [['e2e4', 'g1f3', 'd2d4', 'f3d4'], ['c7c5', 'd7d6', 'c5d4', 'g8f6']]
+        q_gambit = [['d2d4', 'c2c4', 'b1c3', 'g1f3'], ['d7d5', 'e7e6', 'g8f6', 'c7c6']]
+        caro_kann = [[], []]
+
+        # Engine playing white
+
+        # Function to run through opening-lines
+        def find_move(self, opening_moves):
+            try:
+                if self.made_moves[0] == opening_moves[0][0]:
+                    try:
+                        if self.made_moves[2] == opening_moves[0][1]:
+                            pass
+                            try:
+                                if self.made_moves[4] == opening_moves[0][2]:
+                                    try:
+                                        if self.made_moves[6] == opening_moves[0][3]:
+                                            return opening_moves[1][3]
+                                    except:
+                                        return opening_moves[1][2]
+                            except:
+                                return opening_moves[1][1]
+                    except:
+                        return opening_moves[1][0]
+            except:
+                return None
+        
 
         # Engine playing black
         if self.user == chess.WHITE:
-            
-            # open sicilian
-            try:
-                if self.made_moves[0]=='e2e4':
-                    try:
-                        if self.made_moves[2] == 'g1f3':
-                            pass
-                            try:
-                                if self.made_moves[4] == 'd2d4':
-                                    pass
-                                    try:
-                                        if self.made_moves[6] == 'f3d4':
-                                            return 'g8f6'
-                                    except:
-                                        return str('c5d4')
-                            except:
-                                return str('d7d6')
-                    except:
-                        return str('c7c5')
-            except:
-                return None
-
-            # queens gambit declined
-            try:
-                if self.made_moves[0]=='d2d4':
-                    try:
-                        if self.made_moves[2] == 'c2c4':
-                            pass
-                            try:
-                                if self.made_moves[4] == 'b1c3':
-                                    pass
-                                    try:
-                                        if self.made_moves[6] == 'g1f3':
-                                            return 'c7c6'
-                                    except:
-                                        return str('g8f6')
-                            except:
-                                return str('e7e6')
-                    except:
-                        return str('d7d5')
-            except:
-                return None
+            if find_move(self, sicilian) != None:
+                return find_move(self, sicilian)
+            if find_move(self, q_gambit) != None:
+                return find_move(self, q_gambit)
+            return None
 
 
         # Engine playing white
         if self.user == chess.BLACK:
+            pass
 
-            if self.made_moves == []:
-                return 'e2e4'
 
-            # open sicilian
-            try:
-                if self.made_moves[1]=='c7c5':
-                    try:
-                        if self.made_moves[3] == 'd7d6':
-                            pass
-                            try:
-                                if self.made_moves[5] == 'c5d4':
-                                    pass
-                                    try:
-                                        if self.made_moves[7] == 'g8f6':
-                                            return 'b1c3'
-                                    except:
-                                        return str('f3d4')
-                            except:
-                                return str('d2d4')
-                    except:
-                        return str('g1f3')
-            except:
-                return None
 
 
     def make_opening_move(self):
