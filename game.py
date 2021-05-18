@@ -42,7 +42,7 @@ def play():
             user_move = make_move(board)
             board.push(user_move)
             engine.made_moves.append(str(user_move))
-            evaluations.append(engine.evaluate_board())
+            evaluations.append(engine.evaluate_board(board))
         
         while not board.is_game_over():
 
@@ -50,18 +50,20 @@ def play():
             if engine.is_opening():
                 engine_move = engine.make_opening_move()
                 if engine_move == None:
-                    engine_move = engine.evaluate_move()
+                    engine_move = engine.evaluate_move(board)
             else:
-                engine_move = engine.evaluate_move()
+                engine_move = engine.evaluate_move(board)
 
             engine.made_moves.append(engine_move)
             board.push_san(str(engine_move))
+            evaluations.append(engine.evaluate_board(board))
             print(f"\nEngine plays: {engine_move}")
             print(display(board))
 
             user_move = make_move(board)
             board.push(user_move)
             engine.made_moves.append(str(user_move))
+            evaluations.append(engine.evaluate_board(board))
     
     else:
         print("Invalid input - enter '1' or '2'")
