@@ -6,7 +6,7 @@ import time
 
 def play():
 
-    # instantiate the board
+    # instantiate the board 
     board = chess.Board()
 
     game_mode = input("Please choose game-mode.\nType '1' to play without AI, type '2' to play with AI: \n")
