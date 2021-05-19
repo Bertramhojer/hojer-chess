@@ -1,6 +1,7 @@
 import chess
 from constants import pieces
 import evaluation
+import matplotlib.pyplot as plt
 import time
 
 
@@ -50,17 +51,19 @@ def play():
             if engine.is_opening():
                 engine_move = engine.make_opening_move()
                 if engine_move == None:
-                    engine_move = engine.evaluate_move(board)
+                    engine_move = engine.get_best_move(board)
             else:
-                engine_move = engine.evaluate_move(board)
+                engine_move = engine.get_best_move(board)
 
-            engine.made_moves.append(engine_move)
+            engine.made_moves.append(str(engine_move))
             board.push_san(str(engine_move))
             evaluations.append(engine.evaluate_board(board))
             print(f"\nEngine plays: {engine_move}")
             print(display(board))
 
             user_move = make_move(board)
+            if user_move == 'resign':
+                break
             board.push(user_move)
             engine.made_moves.append(str(user_move))
             evaluations.append(engine.evaluate_board(board))
@@ -78,6 +81,8 @@ def play():
         print("Black wins!")
     else:
         print("Game ends in a draw!")
+    
+    visualize_game(engine.made_moves, evaluations)
 
 
 def display(board):
@@ -86,7 +91,6 @@ def display(board):
     Inspired by Andrew Healey's terminal GUI which in turn is inspired by sunfish.
     Functions iterates over each square and changes letter value to its unicode representation and
     prints out the board in the user-terminal.
-
     Variables
     board_str : 127 chr iterable list-representation of the chessboard
     pieces : unicode chess pieces found in constants.py
@@ -110,6 +114,19 @@ def display(board):
     return "\n" + "\n".join(uni_board)
 
 
+def visualize_game(x, y):
+
+    x.insert(0, 'start')
+    y.insert(0, 0)
+
+    plt.plot(x, y, color='red', marker='o')
+    plt.title('Board Evaluation Throughout Game', fontsize=14)
+    plt.xlabel('Move', fontsize=12)
+    plt.ylabel('Evaluation', fontsize=12)
+    plt.grid(True)
+    plt.show()
+
+
 def make_move(board):
 
     move = input("('?') for legal moves\nYour move:\n")
@@ -119,6 +136,8 @@ def make_move(board):
         for legal_move in board.legal_moves:
             print(legal_move, end=", ")
         print("\n")
+    elif move == 'resign':
+        return 'resign'
     else:
         for legal_move in board.legal_moves:
             if move == str(legal_move):
