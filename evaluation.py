@@ -162,7 +162,7 @@ class SimpleEval(BaseEngine):
 
     def evaluate_piece(self, piece, loc):
         """
-
+        Evaluates the current value of a piece from the specified piece-square tables and locations.    
         """
 
         type = piece.piece_type
@@ -203,6 +203,9 @@ class SimpleEval(BaseEngine):
 
     
     def is_capture(self, _sq):
+        """
+        Checks whether their is a piece on a given square.
+        """
         _sq = self.board.piece_at(_sq)
         if _sq is None:
             return False
@@ -210,31 +213,44 @@ class SimpleEval(BaseEngine):
     
 
     def evaluate_capture(self, to_sq, from_sq):
+        """
+        Evaluates the dfifference between an attacking piece and an attacked piece.
+        """
 
-            # attacked piece
-            piece_1 = self.board.piece_at(to_sq).piece_type
-            # capturing piece
-            piece_2 = self.board.piece_at(from_sq).piece_type
+        # attacked piece
+        piece_1 = self.board.piece_at(to_sq).piece_type
+        # capturing piece
+        piece_2 = self.board.piece_at(from_sq).piece_type
 
-            piece_diff = (constants_sun.piece_value[piece_1] - constants_sun.piece_value[piece_2])
+        # difference in piece values according to constants.py
+        piece_diff = (constants_sun.piece_value[piece_1] - constants_sun.piece_value[piece_2])
 
-            # e.g. knight for bishop or pawn for pawn
-            if piece_diff >= 0 and piece_diff < 100: 
-                return 1
-            # minor piece for major piece
-            if piece_diff >= 100 and piece_diff < 300:
-                return 2
-            # minor/major piece for queen/king
-            if piece_diff >= 300:
-                return 3
-            # badly weighed trade
-            if piece_diff < 0:
-                return 0
+        # e.g. knight for bishop or pawn for pawn
+        if piece_diff >= 0 and piece_diff < 100: 
+            return 1
+        # minor piece for major piece
+        if piece_diff >= 100 and piece_diff < 300:
+            return 2
+        # minor/major piece for queen/king
+        if piece_diff >= 300:
+            return 3
+        # badly weighed trade
+        if piece_diff < 0:
+            return 0
             
 
     
     def under_attack_now(self, move):
-        # define a function that checks whether any opposite side pieces can attack the piece on current square
+        """
+        Checks whether an piece is currently under attack and evaluates how many and
+        which piece are attacking.
+
+        - variables -
+        attackers : list of squares from which square is attacked
+        att_types : list of piece_types on attacking squares
+        """
+
+        # Check attacking pieces when engine is black
         if self.user == chess.WHITE:
             if self.board.is_attacked_by(chess.WHITE, move.from_square):
                 attackers = list(self.board.attackers(chess.WHITE, move.from_square))
@@ -243,6 +259,7 @@ class SimpleEval(BaseEngine):
                     att_types.append(self.board.piece_at(att).piece_type)
                 return att_types
 
+        # Check attackibg pieces when engine is white
         if self.user == chess.BLACK:
             if self.board.is_attacked_by(chess.BLACK, move.from_square):
                 attackers = list(self.board.attackers(chess.BLACK, move.from_square))
@@ -253,7 +270,16 @@ class SimpleEval(BaseEngine):
 
     
     def under_attack_future(self, move):
-        # define a function that checks whether any opposite side pieces can attack the piece on current square
+        """
+        Checks whether an piece will be under attack if move is made and evaluates,
+        how many and which pieces are attacking.
+
+        - variables -
+        attackers : list of squares from which square is attacked
+        att_types : list of piece_types on attacking squares
+        """
+
+        # Check attacking pieces when engine is black
         if self.user == chess.WHITE:
             if self.board.is_attacked_by(chess.WHITE, move.to_square):
                 attackers = list(self.board.attackers(chess.WHITE, move.to_square))
@@ -262,6 +288,7 @@ class SimpleEval(BaseEngine):
                     att_types.append(self.board.piece_at(att).piece_type)
                 return att_types
 
+        # Check attacking pieces when engine is white
         if self.user == chess.BLACK:
             if self.board.is_attacked_by(chess.BLACK, move.to_square):
                 attackers = list(self.board.attackers(chess.BLACK, move.to_square))
@@ -270,7 +297,7 @@ class SimpleEval(BaseEngine):
                     att_types.append(self.board.piece_at(att).piece_type)
                 return att_types
 
-    
+    # superflous
     def to_sq_attacked(self, move):
         if self.user == chess.WHITE:
             if self.board.is_attacked_by(chess.WHITE, move.to_square):
@@ -281,7 +308,7 @@ class SimpleEval(BaseEngine):
                 return True
             return False
     
-
+    # superflous
     def to_sq_defended(self, move):
         if self.user == chess.WHITE:
             if self.board.is_attacked_by(chess.BLACK, move.to_square):
@@ -294,15 +321,29 @@ class SimpleEval(BaseEngine):
 
 
     def evaluate_board(self, board):
+        """
+        Make an overall evaluation of the board by piece-values and piece-square tables.
+        positive (+) for white and negative (-) for black.
+
+        - variables -
+        piece : chess-piece on current square
+        value : piece-square table value of piece
+        total : overall board-evaluation
+        """
+
+        # iterate through all squares in board
         total = 0
         for sq in chess.SQUARES:
             piece = board.piece_at(sq)
 
+            # continues if there is no piece on the square
             if not piece:
                 continue
-
+            
+            # estimates value of piece by piece-square tables
             value = self.evaluate_piece(piece, sq)
 
+            # adds value to overall board-evaluation
             if piece.color == chess.WHITE:
                 total += value
             elif piece.color == chess.BLACK:
@@ -312,6 +353,14 @@ class SimpleEval(BaseEngine):
     
 
     def evaluate_board_2(self, move):
+        """
+        Make an overall evaluation of the board by piece-values and piece-square tables
+        on the future position of the board.
+        positive (+) for white and negative (-) for black.
+
+        - variables -
+        see evaluate_board()
+        """
 
         tmp_board = self.board.copy()
         tmp_board.push(move)
@@ -320,7 +369,11 @@ class SimpleEval(BaseEngine):
     
 
     def move_is_check(self, move):
+        """
+        Checks if a move is a check
+        """
 
+        # make a copy of the board and push move to tmp_board
         tmp_board = self.board.copy()
         tmp_board.push(move)
         if tmp_board.is_check():
@@ -329,6 +382,19 @@ class SimpleEval(BaseEngine):
             
 
     def get_move_score(self, move):
+        """
+        Simple Move Evaluation Function. Tweak this to change the behavior of the engine.
+        Uses all previously defined functions to estimate the best move.
+
+        - input -
+        move : a chess.Move object from the engine.Board
+
+        - variables -
+        score : the score of a given move
+        loc_1, loc_2 : from and to squares related to the move
+        piece : chess-piece on current board location.
+        """
+
 
         score = 0
         loc_1 = move.from_square
@@ -395,17 +461,22 @@ class SimpleEval(BaseEngine):
 
 
     def get_best_move(self):
+        """
+        Gets move-values for all currently legal moves by iterating through
+        legal moves and saving move-scores to a dictionary.
+
+        Returns the best move according to the Simple Evaluation Algorithm.
+        """
 
         all_moves = dict()
 
+        # iterate through currently legal moves
         for move in self.board.legal_moves:
 
             score = self.get_move_score(move)
             all_moves[move] = score
         
-        for i in list(all_moves.items()):
-            print(i)
-        
+        # create a sorted dictionary of move scores and pick best move
         moves = dict(sorted(all_moves.items(), key=lambda x:x[1], reverse=True))
         best_move = list(moves.items())[0][0]
         
