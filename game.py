@@ -16,7 +16,6 @@ def play():
     user_move : the move entered by the user
     """
 
-
     # instantiate the board 
     board = chess.Board()
 
@@ -33,7 +32,10 @@ def play():
                     print(" -- White to move --")
                 else:
                     print(" -- Black to move --")
-                board.push(make_move(board))
+                user_move = make_move(board)
+                if user_move == 'resign':
+                    break
+                board.push(user_move)
 
     elif game_mode == '2':
 
@@ -49,54 +51,73 @@ def play():
                 print("Please enter either 'w' or 'b'")
 
         while True:
-            engine = input("Enter 1 or 2: \n1) Random Move AI \n2) Simple Evaluation Algorithm AI\n")
-            if engine == '1':
+            engine_inp = input("Enter 1 or 2: \n1) Random Move AI \n2) Simple Evaluation Algorithm AI\n")
+            if engine_inp == '1':
                 engine = evaluation.RandomEval(board, made_moves = list(), user=user)
                 break
-            elif engine == '2':
+            elif engine_inp == '2':
                 engine = evaluation.SimpleEval(board, made_moves = list(), user=user)
                 evaluations = list()
+                plot_moves = list()
                 break
 
-        if user == chess.WHITE:
-            print(display(board))
-            user_move = make_move(board)
-            engine.board.push(user_move)
-            engine.made_moves.append(str(user_move))
-            evaluations.append(engine.evaluate_board(engine.board))
-        
-        while not board.is_game_over():
+        if engine_inp == '1':
+            if user == chess.WHITE:
+                print(display(board))
+                user_move = make_move(board)
+                engine.board.push(user_move)
+            
+            while not engine.board.is_game_over():
+                engine_move = engine.make_move()
+                engine.board.push_san(str(engine_move))
+                print(display(engine.board))
 
-            # Check if we're in the opening
-            if engine.is_opening():
-                engine_move = engine.make_opening_move()
-                # no opening move found
-                if engine_move == None:
+                user_move = make_move(board)
+                if user_move == 'resign':
+                    break
+                engine.board.push(user_move)
+
+
+        if engine_inp == '2':
+            if user == chess.WHITE:
+                print(display(board))
+                user_move = make_move(board)
+                engine.board.push(user_move)
+                engine.made_moves.append(str(user_move))
+                plot_moves.append(f"{engine.board.fullmove_number}. {user_move}")
+                evaluations.append(engine.evaluate_board(engine.board))
+            
+            while not engine.board.is_game_over():
+
+                # Check if we're in the opening
+                if engine.is_opening():
+                    engine_move = engine.make_opening_move()
+                    # no opening move found
+                    if engine_move == None:
+                        engine_move = engine.get_best_move()
+                else:
                     engine_move = engine.get_best_move()
-            else:
-                engine_move = engine.get_best_move()
 
-            # push the engine move to the board and display board
-            engine.made_moves.append(str(engine_move))
-            engine.board.push_san(str(engine_move))
-            evaluations.append(engine.evaluate_board(engine.board))
-            print(f"\nEngine plays: {engine_move}")
-            print(display(engine.board))
+                # push the engine move to the board and display board
+                engine.made_moves.append(str(engine_move))
+                plot_moves.append(f"{engine.board.fullmove_number}. {engine_move}")
+                engine.board.push_san(str(engine_move))
+                evaluations.append(engine.evaluate_board(engine.board))
+                print(f"\nEngine plays: {engine_move}")
+                print(display(engine.board))
 
-            # get move from user
-            user_move = make_move(board)
-            if user_move == 'resign':
-                break
-            engine.board.push(user_move)
-            engine.made_moves.append(str(user_move))
-            evaluations.append(engine.evaluate_board(engine.board))
-    
-    else:
-        print("Invalid input - enter '1' or '2'")
-        try:
-            play()
-        except KeyboardInterrupt:
-            pass
+                # get move from user
+                user_move = make_move(board)
+                if user_move == 'resign':
+                    break
+                engine.board.push(user_move)
+                engine.made_moves.append(str(user_move))
+                plot_moves.append(f"{engine.board.fullmove_number}. {user_move}")
+                evaluations.append(engine.evaluate_board(engine.board))
+            
+            # display the move-evaluation as evaluated by the engine
+            visualize_game(plot_moves, evaluations)
+
 
     # check game-result
     if board.result() == "1-0":
@@ -108,9 +129,6 @@ def play():
     else:
         print("Game ends in a draw!")
     
-    # display the move-evaluation as evaluated by the engine
-    visualize_game(engine.made_moves, evaluations)
-
 
 def display(board):
     """

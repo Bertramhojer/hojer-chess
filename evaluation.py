@@ -1,5 +1,5 @@
 import chess
-import constants_sun
+import constants
 import random
 
 
@@ -84,6 +84,7 @@ class BaseEngine:
 
     def make_opening_move(self):
         self.move = self.get_opening_move()
+        print(self.move)
         for legal_move in self.board.legal_moves:
             if self.move == str(legal_move):
                 return legal_move
@@ -127,11 +128,10 @@ class SimpleEval(BaseEngine):
     is_capture() : checks whether a move is a capture
     evaluate_capture() : evaluates whether a trade is favorable
     under_attack_now() : checks for attacks at current square
-    under_attack_future() : checks for attacks in future square
-    is_attacked() : checks whether a given move will place the piece under attack
-    is_defended() : check whether a given move will place the piece on a defended square
-    evaluate_board() : makes an evaluation of the board by calculating the values from evaluate_piece() for all pieces on the board.
-    evaluate_move() : makes use of above-stated evaluation functions to find the best move in the current position.
+    under_attack_future() : checks for attacks on future square
+    evaluate_board() : makes overall board evaluation based on piece-square tables
+    get_move_score() : estimates best move from evaluation functions.
+    get_best_move() : gets the best move in the position
     """
 
     def __init__(self, board, made_moves, user):
@@ -169,37 +169,37 @@ class SimpleEval(BaseEngine):
         
         if piece.color == chess.WHITE:
             if type == chess.PAWN:
-                return constants_sun.piece_value[1] + constants_sun.white_pawn[loc]
+                return constants.piece_value[1] + constants.white_pawn[loc]
             if type == chess.KNIGHT:
-                return constants_sun.piece_value[2] + constants_sun.white_knight[loc]
+                return constants.piece_value[2] + constants.knight[loc]
             if type == chess.BISHOP:
-                return constants_sun.piece_value[3] + constants_sun.white_bishop[loc]
+                return constants.piece_value[3] + constants.white_bishop[loc]
             if type == chess.ROOK:
-                return constants_sun.piece_value[4] + constants_sun.white_rook[loc]
+                return constants.piece_value[4] + constants.white_rook[loc]
             if type == chess.QUEEN:
-                return constants_sun.piece_value[5] + constants_sun.white_queen[loc]
+                return constants.piece_value[5] + constants.queen[loc]
             if type == chess.KING:
                 if self.is_end_game():
-                    return constants_sun.piece_value[6] + constants_sun.white_king_end[loc]
+                    return constants.piece_value[6] + constants.white_king_end[loc]
                 else:
-                    return constants_sun.piece_value[6] + constants_sun.white_king_mid[loc]
+                    return constants.piece_value[6] + constants.white_king_mid[loc]
 
         elif piece.color == chess.BLACK:
             if type == chess.PAWN:
-                return constants_sun.piece_value[1] + constants_sun.black_pawn[loc]
+                return constants.piece_value[1] + constants.black_pawn[loc]
             if type == chess.KNIGHT:
-                return constants_sun.piece_value[2] + constants_sun.white_knight[loc]
+                return constants.piece_value[2] + constants.knight[loc]
             if type == chess.BISHOP:
-                return constants_sun.piece_value[3] + constants_sun.black_bishop[loc]
+                return constants.piece_value[3] + constants.black_bishop[loc]
             if type == chess.ROOK:
-                return constants_sun.piece_value[4] + constants_sun.black_rook[loc]
+                return constants.piece_value[4] + constants.black_rook[loc]
             if type == chess.QUEEN:
-                return constants_sun.piece_value[5] + constants_sun.white_queen[loc]
+                return constants.piece_value[5] + constants.queen[loc]
             if type == chess.KING:
                 if self.is_end_game():
-                    return constants_sun.piece_value[6] + constants_sun.black_king_end[loc]
+                    return constants.piece_value[6] + constants.black_king_end[loc]
                 else:
-                    return constants_sun.piece_value[6] + constants_sun.black_king_mid[loc]
+                    return constants.piece_value[6] + constants.black_king_mid[loc]
 
     
     def is_capture(self, _sq):
@@ -223,7 +223,7 @@ class SimpleEval(BaseEngine):
         piece_2 = self.board.piece_at(from_sq).piece_type
 
         # difference in piece values according to constants.py
-        piece_diff = (constants_sun.piece_value[piece_1] - constants_sun.piece_value[piece_2])
+        piece_diff = (constants.piece_value[piece_1] - constants.piece_value[piece_2])
 
         # e.g. knight for bishop or pawn for pawn
         if piece_diff >= 0 and piece_diff < 100: 
@@ -238,7 +238,6 @@ class SimpleEval(BaseEngine):
         if piece_diff < 0:
             return 0
             
-
     
     def under_attack_now(self, move):
         """
@@ -271,7 +270,7 @@ class SimpleEval(BaseEngine):
     
     def under_attack_future(self, move):
         """
-        Checks whether an piece will be under attack if move is made and evaluates,
+        Checks whether a piece will be under attack if move is made and evaluates,
         how many and which pieces are attacking.
 
         - variables -
@@ -296,28 +295,6 @@ class SimpleEval(BaseEngine):
                 for att in attackers:
                     att_types.append(self.board.piece_at(att).piece_type)
                 return att_types
-
-    # superflous
-    def to_sq_attacked(self, move):
-        if self.user == chess.WHITE:
-            if self.board.is_attacked_by(chess.WHITE, move.to_square):
-                return True
-            return False
-        if self.user == chess.BLACK:
-            if self.board.is_attacked_by(chess.BLACK, move.to_square):
-                return True
-            return False
-    
-    # superflous
-    def to_sq_defended(self, move):
-        if self.user == chess.WHITE:
-            if self.board.is_attacked_by(chess.BLACK, move.to_square):
-                return True
-            return False
-        if self.user == chess.BLACK:
-            if self.board.is_attacked_by(chess.WHITE, move.to_square):
-                return True
-            return False
 
 
     def evaluate_board(self, board):
@@ -406,7 +383,10 @@ class SimpleEval(BaseEngine):
         if self.is_capture(loc_2):
             capt_score = self.evaluate_capture(loc_2, loc_1)
             if capt_score == 0:
-                score -= 15
+                if not fut_attackers:
+                    score += 50
+                else:
+                    score -= 15
             elif capt_score == 1:
                 score += 15
             elif capt_score == 2:
@@ -418,14 +398,6 @@ class SimpleEval(BaseEngine):
             score += (self.evaluate_piece(piece, loc_2) - self.evaluate_piece(piece, loc_1))
         else:
             score -= 10
-        
-        if self.to_sq_attacked(move):
-            score -= 5
-        else:
-            score += 5
-        
-        if self.to_sq_defended(move):
-            score += 10
         
         if self.move_is_check(move):
             score += 10
@@ -456,6 +428,7 @@ class SimpleEval(BaseEngine):
                 ):
                 if 1 in fut_attackers:
                     score -= 30
+            
 
         return score
 
